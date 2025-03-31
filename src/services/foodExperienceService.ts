@@ -157,7 +157,7 @@ export async function getFoodExperienceById(id: string) {
       *,
       host_id,
       images:food_experience_images(id, image_path, is_primary, display_order),
-      host:profiles!host_id(id, name, avatar_url),
+      host:profiles!host_id(id, name, avatar_url, about),
       amenities:food_experience_amenities(
         amenity:amenities(id, name, category)
       )
@@ -220,6 +220,7 @@ export async function getFoodExperienceById(id: string) {
       image: data.host?.avatar_url || '',
       rating: parseFloat(averageRating.toFixed(1)),
       reviews: reviewCount,
+      about: data.host?.about || 'I love connecting with travelers and sharing unique experiences.'
     },
     details: {
       duration: data.duration || '2 hours',
@@ -278,7 +279,7 @@ export async function isFoodExperienceFavorited(experienceId: string) {
     .eq('user_id', session.session.user.id)
     .eq('item_id', experienceId)
     .eq('item_type', 'food_experience')
-    .single();
+    .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors when no rows are found
 
   if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
     console.error('Error checking favorite status:', error);

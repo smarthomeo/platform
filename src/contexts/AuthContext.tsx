@@ -14,6 +14,7 @@ interface AuthUser {
   provider: 'google' | 'email';
   // New timestamp for caching
   lastProfileCheck?: number;
+  about?: string;
 }
 
 interface AuthContextType {
@@ -40,6 +41,7 @@ interface Profile {
   created_at?: string;
   updated_at?: string;
   is_admin?: boolean;
+  about?: string;
 }
 
 // Cache timing configurations
@@ -77,7 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       picture: supabaseUser.user_metadata.picture || supabaseUser.user_metadata.avatar_url,
       is_host: supabaseUser.user_metadata.is_host || false,
       provider: supabaseUser.app_metadata.provider === 'google' ? 'google' : 'email',
-      lastProfileCheck: Date.now()
+      lastProfileCheck: Date.now(),
+      about: supabaseUser.user_metadata.about
     };
   };
 
@@ -257,7 +260,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           is_host: profile.is_host,
           name: profile.name,
           picture: profile.avatar_url,
-          lastProfileCheck: now
+          lastProfileCheck: now,
+          about: profile.about
         };
         
         // Cache the profile data

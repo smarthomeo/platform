@@ -235,13 +235,7 @@ const HostDashboard = () => {
               <Home className="w-4 h-4" />
               Back to Home
             </Button>
-            <Button 
-              onClick={() => navigate('/host/food/new')}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              New Experience
-            </Button>
+           
           </div>
         </div>
       </div>

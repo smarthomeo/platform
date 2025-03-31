@@ -97,6 +97,7 @@ const Profile = () => {
     language: "English",
     currency: "USD",
     timezone: "UTC-5",
+    about: user?.about || "I love connecting with travelers and sharing unique experiences."
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -480,18 +481,16 @@ const Profile = () => {
       setIsLoading(true);
 
       // 1. Update profiles table first (source of truth)
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           name: profileData.name,
-          updated_at: new Date().toISOString()
+          about: profileData.about
+          // Only these fields for now, as they're the ones in the profiles table
         })
         .eq('id', user.id);
         
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        throw new Error(`Profile update failed: ${updateError.message}`);
-      }
+      if (error) throw error;
       
       // 2. Update auth user metadata to keep in sync
       const { error: userUpdateError } = await supabase.auth.updateUser({
@@ -724,6 +723,22 @@ const Profile = () => {
                       value={profileData.language}
                       onChange={(e) => setProfileData({...profileData, language: e.target.value})}
                     />
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <Label htmlFor="about">About</Label>
+                    <textarea
+                      id="about"
+                      name="about"
+                      rows={4}
+                      className="w-full p-2 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Tell others about yourself..."
+                      value={profileData.about}
+                      onChange={(e) => setProfileData({ ...profileData, about: e.target.value })}
+                      disabled={!isEditing}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This will be displayed on your host listings and profile page
+                    </p>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-4">
@@ -978,29 +993,7 @@ const Profile = () => {
                     </div>
                   </div>
 
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Connected Accounts</h3>
-                    <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start"
-                        onClick={handleConnectGoogle}
-                      >
-                        <GoogleIcon />
-                        <span className="ml-2">Connect Google Account</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start"
-                        onClick={handleConnectFacebook}
-                      >
-                        <Facebook className="w-4 h-4" />
-                        <span className="ml-2">Connect Facebook Account</span>
-                      </Button>
-                    </div>
-                  </div>
+                 
                 </CardContent>
               </Card>
             </TabsContent>

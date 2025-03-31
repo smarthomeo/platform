@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -131,6 +131,111 @@ const Section = <T extends { id: number | string }>({
   );
 };
 
+const ScrollingCategories = ({ categories }: { categories: Category[] }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!scrollRef.current || categories.length === 0 || isDragging) return;
+
+    const scrollContainer = scrollRef.current;
+    const scrollWidth = scrollContainer.scrollWidth;
+    const containerWidth = scrollContainer.clientWidth;
+    const scrollDistance = scrollWidth - containerWidth;
+    
+    const scroll = () => {
+      if (isHovered || isDragging) return;
+      
+      const currentScroll = scrollContainer.scrollLeft;
+      if (currentScroll >= scrollDistance) {
+        // Reset to start when reaching the end
+        scrollContainer.scrollLeft = 0;
+      } else {
+        scrollContainer.scrollLeft += 1;
+      }
+    };
+
+    const intervalId = setInterval(scroll, 30);
+
+    return () => clearInterval(intervalId);
+  }, [categories, isHovered, isDragging]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current!.offsetLeft);
+    setScrollLeft(scrollRef.current!.scrollLeft);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current!.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current!.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - scrollRef.current!.offsetLeft);
+    setScrollLeft(scrollRef.current!.scrollLeft);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const x = e.touches[0].pageX - scrollRef.current!.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current!.scrollLeft = scrollLeft - walk;
+  };
+
+  return (
+    <section className="py-12 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <h2 className="text-4xl font-bold tracking-tight text-gray-900 font-display mb-8">
+          Popular Categories
+        </h2>
+        <div 
+          ref={scrollRef}
+          className="flex gap-6 overflow-x-hidden cursor-grab active:cursor-grabbing"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            setIsDragging(false);
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleMouseUp}
+        >
+          {/* Duplicate categories for seamless scrolling */}
+          {[...categories, ...categories].map((category, index) => (
+            <div
+              key={`${category.id}-${index}`}
+              className="flex-shrink-0 w-[300px]"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <ItemCard
+                item={category}
+                onClick={() => !isDragging && navigate(`/food?cuisine_types=${encodeURIComponent(category.id)}`)}
+                showCount
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export const FeaturedSection = () => {
   const navigate = useNavigate();
   const [featuredFood, setFeaturedFood] = useState<FeaturedItem[]>([]);
@@ -179,29 +284,29 @@ export const FeaturedSection = () => {
             
             if (Array.isArray(categoriesData) && categoriesData.length > 0) {
               const categoryImages = {
-                'Italian': '/images/italian.jpg',
-                'Asian': '/images/asian.jpg', 
-                'African': '/images/african.jpg',
-                'Mexican': '/images/mexican.jpg',
-                'American': '/images/american.jpg',
-                'Mediterranean': '/images/mediterranean.jpg',
-                'European': '/images/european.jpg',
-                'Indian': '/images/indian.jpg',
-                'Middle Eastern': '/images/middle-eastern.jpg',
-                'Japanese': '/images/japanese.jpg',
-                'Thai': '/images/thai.jpg',
-                'Chinese': '/images/chinese.jpg',
-                'Korean': '/images/korean.jpg',
-                'Vietnamese': '/images/vietnamese.jpg',
-                'French': '/images/french.jpg',
-                'Spanish': '/images/spanish.jpg',
-                'Greek': '/images/greek.jpg',
-                'Caribbean': '/images/caribbean.jpg',
-                'Latin American': '/images/latin-american.jpg',
-                'Vegetarian': '/images/vegetarian.jpg',
-                'Vegan': '/images/vegan.jpg',
-                'Gluten-Free': '/images/gluten-free.jpg',
-                'default': '/images/default-cuisine.jpg'
+                'Italian': '/images/italian.jpeg',
+                'Asian': '/images/asian.jpeg', 
+                'African': '/images/african.jpeg',
+                'Mexican': '/images/mexican.jpeg',
+                'American': '/images/american.jpeg',
+                'Mediterranean': '/images/mediterranean.jpeg',
+                'European': '/images/european.jpeg',
+                'Indian': '/images/indian.jpeg',
+                'Middle Eastern': '/images/middle-eastern.jpeg',
+                'Japanese': '/images/japanese.jpeg',
+                'Thai': '/images/thai.jpeg',
+                'Chinese': '/images/chinese.jpeg',
+                'Korean': '/images/korean.jpeg',
+                'Vietnamese': '/images/vietnamese.jpeg',
+                'French': '/images/french.jpeg',
+                'Spanish': '/images/spanish.jpeg',
+                'Greek': '/images/greek.jpeg',
+                'Caribbean': '/images/caribbean.jpeg',
+                'Latin American': '/images/latin-american.jpeg',
+                'Vegetarian': '/images/vegetarian.jpeg',
+                'Vegan': '/images/vegan.jpeg',
+                'Gluten-Free': '/images/gluten-free.jpeg',
+                'default': '/images/default-cuisine.jpeg'
               };
               
               const formattedCategories = categoriesData.map(item => {
@@ -301,62 +406,51 @@ export const FeaturedSection = () => {
   }
 
   return (
-    <div className="space-y-16">
-      <Section
-        title="Popular Food Experiences"
-        items={featuredFood}
-        viewAllLink="/food"
-        renderItem={(item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            onClick={() => navigate(`/food/${item.id}`)}
-            priceLabel={`$${item.price_per_person} per person`}
-            showRating
-          />
-        )}
-      />
-      
-      {sectionLoadingStates.categories && !categories.length ? (
-        <div className="py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold tracking-tight text-gray-900 font-display mb-8">
-              Browse by Category
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[1, 2, 3].map(i => <LoadingPlaceholder key={i} />)}
-            </div>
-          </div>
-        </div>
-      ) : (
+    <div className="space-y-8">
+      {/* Featured Food Section */}
+      {!sectionLoadingStates.food ? (
         <Section
-          title="Browse by Category"
-          items={categories}
-          renderItem={(category) => (
+          title="Featured Food Experiences"
+          items={featuredFood}
+          viewAllLink="/food"
+          renderItem={(item) => (
             <ItemCard
-              key={category.id}
-              item={category}
-              onClick={() => navigate(`/food?cuisine_types=${encodeURIComponent(category.id)}`)}
-              showCount
+              key={item.id}
+              item={item}
+              onClick={() => navigate(`/food/${item.id}`)}
+              priceLabel={`$${item.price_per_person} per person`}
+              showRating
             />
           )}
         />
+      ) : (
+        <LoadingPlaceholder />
       )}
 
-      <Section
-        title="Featured Stays"
-        items={featuredStays}
-        viewAllLink="/stays"
-        renderItem={(item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            onClick={() => navigate(`/stays/${item.id}`)}
-            priceLabel={`$${item.price_per_night} per night`}
-            showRating
-          />
-        )}
-      />
+      {/* Scrolling Categories Section */}
+      {!sectionLoadingStates.categories && categories.length > 0 && (
+        <ScrollingCategories categories={categories} />
+      )}
+
+      {/* Featured Stays Section */}
+      {!sectionLoadingStates.stays ? (
+        <Section
+          title="Featured Stays"
+          items={featuredStays}
+          viewAllLink="/stays"
+          renderItem={(item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onClick={() => navigate(`/stays/${item.id}`)}
+              priceLabel={`$${item.price_per_night} per night`}
+              showRating
+            />
+          )}
+        />
+      ) : (
+        <LoadingPlaceholder />
+      )}
     </div>
   );
 };

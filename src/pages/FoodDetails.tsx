@@ -15,7 +15,6 @@ import {
   Utensils, 
   MessageCircle,
   Loader2,
-  Phone,
   Navigation,
   Info,
   Image as ImageIcon
@@ -305,12 +304,10 @@ const FoodDetails = () => {
                   </div>
                   
                   <p className="text-muted-foreground mb-6">
-                    I'm passionate about sharing authentic cuisine from my culture. 
-                    I've been cooking traditional dishes for over 15 years and love 
-                    meeting people from around the world who appreciate our food traditions.
+                    {experience.host.about || "I'm passionate about sharing authentic cuisine from my culture. I've been cooking traditional dishes for over 15 years and love meeting people from around the world who appreciate our food traditions."}
                   </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <ChatButton
                       hostId={experience.host?.id}
                       listingId={id || ''}
@@ -320,12 +317,6 @@ const FoodDetails = () => {
                     >
                       Message Host
                     </ChatButton>
-                    <a href="tel:">
-                      <Button variant="outline" className="w-full">
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call Host
-                      </Button>
-                    </a>
                   </div>
                 </Card>
               </TabsContent>
@@ -400,14 +391,7 @@ const FoodDetails = () => {
                     </div>
                   )}
                   
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Nearby landmarks:</h3>
-                    <ul className="list-disc list-inside text-muted-foreground ml-2">
-                      <li>Central Park - 0.5 miles</li>
-                      <li>Downtown Shopping Center - 1.2 miles</li>
-                      <li>City Museum - 1.5 miles</li>
-                    </ul>
-                  </div>
+                  
                 </Card>
               </TabsContent>
             </Tabs>
@@ -462,16 +446,9 @@ const FoodDetails = () => {
                   listingTitle={experience.title}
                   variant="outline"
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
+                 
                   Message Host
                 </ChatButton>
-                
-                <a href="tel:">
-                  <Button variant="outline" className="w-full">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call Host
-                  </Button>
-                </a>
               </div>
               
               <p className="text-center text-sm text-muted-foreground mt-4">

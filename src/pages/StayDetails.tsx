@@ -13,9 +13,7 @@ import {
   Heart, 
   Share2, 
   Star, 
-  MessageCircle,
   Loader2,
-  Phone,
   Navigation,
   Info,
   Image as ImageIcon
@@ -41,7 +39,6 @@ import { ChatButton } from '@/components/chat/ChatButton';
 import BookingWidget from "@/components/BookingWidget";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
 import { getAverageRating, getReviewCount } from "@/services/reviewService";
-import { apiService } from "@/services/api";
 // Define libraries as a constant outside the component to prevent re-creation on each render
 const mapLibraries: Libraries = ['places'];
 
@@ -366,11 +363,10 @@ const StayDetails = () => {
                   </div>
                   
                   <p className="text-muted-foreground mb-6">
-                    I'm passionate about sharing my home with travelers from around the world.
-                    I've been hosting for several years and love helping guests discover the best of what our area has to offer.
+                    {stay.host.about || "I'm passionate about sharing my home with travelers from around the world. I've been hosting for several years and love helping guests discover the best of what our area has to offer."}
                   </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                     <ChatButton
                       hostId={stay.host.id || ''}
                       listingId={id || ''}
@@ -380,12 +376,6 @@ const StayDetails = () => {
                     >
                       Message Host
                     </ChatButton>
-                    <Button variant="outline" className="w-full" asChild>
-                      <a href="tel:">
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call Host
-                      </a>
-                    </Button>
                   </div>
                 </Card>
               </TabsContent>
@@ -455,14 +445,7 @@ const StayDetails = () => {
                     </Button>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Nearby attractions:</h3>
-                    <ul className="list-disc list-inside text-muted-foreground ml-2">
-                      <li>Central Park - 0.5 miles</li>
-                      <li>Downtown Shopping Center - 1.2 miles</li>
-                      <li>City Museum - 1.5 miles</li>
-                    </ul>
-                  </div>
+                 
                 </Card>
               </TabsContent>
             </Tabs>
@@ -476,6 +459,8 @@ const StayDetails = () => {
                 stayId={id || ''}
                 price={stay.price_per_night}
                 maxGuests={stay.details.maxGuests}
+                stayTitle={stay.title}
+                hostId={stay.host?.id}
               />
             </div>
           </div>

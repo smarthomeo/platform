@@ -11,16 +11,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { bookingService } from '@/services/bookingService';
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
+import { ChatButton } from '@/components/chat/ChatButton';
 
 interface BookingWidgetProps {
   stayId: string;
   price: number;
   maxGuests: number;
+  stayTitle?: string;
+  hostId?: string;
 }
 
-const BookingWidget = ({ stayId, price, maxGuests }: BookingWidgetProps) => {
+const BookingWidget = ({ stayId, price, maxGuests, stayTitle = "Stay", hostId }: BookingWidgetProps) => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
@@ -268,6 +271,17 @@ const BookingWidget = ({ stayId, price, maxGuests }: BookingWidgetProps) => {
           </>
         ) : 'Reserve'}
       </Button>
+      <ChatButton
+        hostId={hostId || ''}
+        listingId={stayId}
+        listingType="stay"
+        listingTitle={stayTitle}
+        variant="outline"
+        className="w-full mt-2"
+      >
+       
+        Message Host
+      </ChatButton> 
       
       <p className="text-center text-sm text-muted-foreground mt-2">
         You won't be charged yet

@@ -15,6 +15,7 @@ export interface Stay {
     image: string;
     rating: number;
     reviews: number;
+    about?: string;
   };
   host_id: string;
   details: {
@@ -354,7 +355,7 @@ export const stayService = {
           latitude,
           longitude,
           host_id,
-          host:profiles!host_id(id, name, avatar_url),
+          host:profiles!host_id(id, name, avatar_url, about),
           stay_images:stay_images(id, image_path, is_primary, display_order),
           stay_amenities:stay_amenities(amenity_id, amenities:amenities(id, name))
         `)
@@ -436,7 +437,7 @@ export const stayService = {
       }
       
       // Get host data
-      const host = data.host ?? { name: 'Host Name', avatar_url: '' };
+      const host = data.host ?? { name: 'Host Name', avatar_url: '', about: 'I love connecting with travelers and sharing unique experiences.' };
       
       // Generate availability for demo purposes
       const availability = generateAvailability(data.price_per_night || 100);
@@ -453,7 +454,8 @@ export const stayService = {
           name: host.name,
           image: host.avatar_url || '/placeholder-user.jpg',
           rating: averageRating,
-          reviews: reviewCount
+          reviews: reviewCount,
+          about: host.about || 'I love connecting with travelers and sharing unique experiences.'
         },
         details: {
           bedrooms: data.bedrooms || 1,

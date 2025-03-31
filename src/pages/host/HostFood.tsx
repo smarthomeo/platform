@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   Card, 
@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MapLocationPicker } from "@/components/form/MapLocationPicker";
+import imageCompression from 'browser-image-compression';
 
 import { 
   createFoodExperience, 
@@ -302,60 +303,77 @@ const HostFood = () => {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 1, // Max file size in MB
+      maxWidthOrHeight: 1920, // Max width/height
+      useWebWorker: true,
+      initialQuality: 0.8 // Initial compression quality
+    };
+    
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      return file; // Return original file if compression fails
+    }
+  };
 
-    // If we're in edit mode and have an ID, upload to the server directly
-    if (isEdit && id && id !== "new") {
-      try {
-        setUploading(true);
-        
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const isPrimary = images.length === 0;
-          
-          await uploadFoodExperienceImage(id, file, isPrimary);
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+    
+    setUploading(true);
+    const files = Array.from(event.target.files);
+    
+    try {
+      // Compress all images before upload
+      const compressedFiles = await Promise.all(
+        files.map(async (file) => {
+          const compressed = await compressImage(file);
+          return compressed;
+        })
+      );
+      
+      // Create temporary preview images
+      const newTempImages = compressedFiles.map((file) => ({
+        id: `temp-${Date.now()}-${file.name}`,
+        file,
+        preview: URL.createObjectURL(file),
+        is_primary: tempImages.length === 0 && images.length === 0 // Set as primary if it's the first image
+      }));
+      
+      setTempImages((prev) => [...prev, ...newTempImages]);
+      
+      if (id && id !== "new") {
+        // Upload compressed images if editing existing food experience
+        for (const file of compressedFiles) {
+          try {
+            const result = await uploadFoodExperienceImage(
+              id,
+              file,
+              tempImages.length === 0 && images.length === 0, // Set as primary if it's the first image
+              images.length + tempImages.length
+            );
+            
+            if (result) {
+              await fetchLatestImages(); // Refresh images from server
+            }
+          } catch (error) {
+            console.error(`Error uploading image ${file.name}:`, error);
+            toast.error(`Failed to upload ${file.name}`);
+          }
         }
-        
-        // Fetch the latest images from the server
-        await fetchLatestImages();
-        
-        toast.success("Images uploaded successfully");
-        setUploading(false);
-      } catch (error) {
-        console.error("Error uploading images:", error);
-        toast.error("Failed to upload images");
-        setUploading(false);
       }
-    } else {
-      // If we're creating a new experience, store the images temporarily
-      try {
-        const newTempImages = [];
-        
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const preview = URL.createObjectURL(file);
-          const isPrimary = tempImages.length === 0 && i === 0;
-          
-          newTempImages.push({
-            id: `temp-${Date.now()}-${i}`,
-            file,
-            preview,
-            is_primary: isPrimary
-          });
-        }
-        
-        setTempImages(prev => [...prev, ...newTempImages]);
-        toast.success("Images added successfully");
-      } catch (error) {
-        console.error("Error adding images:", error);
-        toast.error("Failed to add images");
+    } catch (error) {
+      console.error("Error handling image upload:", error);
+      toast.error("Failed to process images");
+    } finally {
+      setUploading(false);
+      if (event.target) {
+        event.target.value = ''; // Reset input
       }
     }
-    
-    // Clear the input
-    event.target.value = '';
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -418,9 +436,8 @@ const HostFood = () => {
 
   const cuisineTypes = [
     "Italian", "French", "Japanese", "Chinese", "Mexican", 
-    "Indian", "Thai", "American", "Mediterranean", "Middle Eastern",
-    "Spanish", "Greek", "Vietnamese", "Korean", "Brazilian",
-    "Ethiopian", "Lebanese", "Moroccan", "Turkish", "Other"
+    "Indian", "Thai", "American", "Spanish", "Default", "Vegetarian", 
+    "African", "Asian"
   ];
 
   const durations = [

@@ -15,6 +15,7 @@ export interface FoodExperience {
     image: string;
     rating: number;
     reviews: number;
+    about?: string;
   };
   details: {
     duration: string;

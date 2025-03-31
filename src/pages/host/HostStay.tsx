@@ -29,6 +29,7 @@ import { MapLocationPicker } from '@/components/form/MapLocationPicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createStay, updateStay, uploadStayImage, deleteStayImage, setStayPrimaryImage } from "@/services/hostService";
 import { supabase } from "@/integrations/supabase/client";
+import imageCompression from 'browser-image-compression';
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -305,60 +306,57 @@ const HostStay = () => {
     updateFormLocation(updatedLocation);
   }, [updateFormLocation]);
 
-  // Simplified image upload handler with better state management
-  const handleImageUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0 || uploading) return;
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 1, // Max file size in MB
+      maxWidthOrHeight: 1920, // Max width/height
+      useWebWorker: true,
+      initialQuality: 0.8 // Initial compression quality
+    };
     
-    // Set uploading mutex to prevent multiple simultaneous uploads
-    setUploading(true);
-    
-    // Validate files before uploading
-    const validFiles: File[] = [];
-    const maxSizeMB = 10;
-    const maxSizeBytes = maxSizeMB * 1024 * 1024; // 10MB in bytes
-    
-    // Check each file
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      // Check file size
-      if (file.size > maxSizeBytes) {
-        toast({
-          title: "Error",
-          description: `File ${file.name} exceeds the ${maxSizeMB}MB size limit`,
-          variant: "destructive",
-        });
-        continue;
-      }
-      
-      // Verify it's an image
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Error",
-          description: `File ${file.name} is not a valid image`,
-          variant: "destructive",
-        });
-        continue;
-      }
-      
-      validFiles.push(file);
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      return file; // Return original file if compression fails
     }
+  };
+
+  const handleImageUpload = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    setLoading(true);
+    const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
     
     if (validFiles.length === 0) {
-      setUploading(false);
+      toast({
+        title: "Error",
+        description: "Please select valid image files",
+        variant: "destructive"
+      });
+      setLoading(false);
       return;
     }
     
     try {
+      // Compress all images before upload
+      const compressedFiles = await Promise.all(
+        validFiles.map(async (file) => {
+          const compressed = await compressImage(file);
+          return compressed;
+        })
+      );
+      
       // Get the current images from the form
       const currentImages = form.getValues('images') || [];
       
       if (id && id !== 'new') {
         // We're editing an existing stay
-        setLoading(true);
         let successCount = 0;
         
-        for (let i = 0; i < validFiles.length; i++) {
-          const file = validFiles[i];
+        for (let i = 0; i < compressedFiles.length; i++) {
+          const file = compressedFiles[i];
           // Set as primary if it's the first image AND there are no current images
           const isPrimary = currentImages.length === 0 && i === 0;
           
@@ -389,9 +387,9 @@ const HostStay = () => {
           
           toast({
             title: "Success",
-            description: successCount === validFiles.length 
+            description: successCount === compressedFiles.length 
               ? "All images uploaded successfully" 
-              : `${successCount} of ${validFiles.length} images uploaded successfully`,
+              : `${successCount} of ${compressedFiles.length} images uploaded successfully`,
           });
         } else {
           toast({
@@ -400,60 +398,28 @@ const HostStay = () => {
             variant: "destructive",
           });
         }
-        setLoading(false);
       } else {
-        // For new stays, convert files to base64 for later upload
-        try {
-          const base64Images = await Promise.all(
-            validFiles.map(async (file) => {
-              return new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  resolve(reader.result as string);
-                };
-                reader.onerror = () => {
-                  reject(new Error(`Failed to read file ${file.name}`));
-                };
-                reader.readAsDataURL(file);
-              });
-            })
-          );
-          
-          // Update in a single batch operation
-          const updatedImages = [...currentImages, ...base64Images];
-          setImages(updatedImages);
-          form.setValue('images', updatedImages);
-          
-          toast({
-            title: "Success",
-            description: "Images added successfully",
-          });
-        } catch (error) {
-          console.error('Error converting images to base64:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process images",
-            variant: "destructive",
-          });
-        }
+        // We're creating a new stay, store the compressed files temporarily
+        const newImages = compressedFiles.map(file => URL.createObjectURL(file));
+        setImages(prev => [...prev, ...newImages]);
+        form.setValue('images', [...currentImages, ...newImages]);
+        
+        toast({
+          title: "Success",
+          description: "Images added successfully",
+        });
       }
     } catch (error) {
-      console.error('Error uploading images:', error);
+      console.error("Error handling image upload:", error);
       toast({
         title: "Error",
-        description: "Failed to upload images",
+        description: "Failed to process images",
         variant: "destructive",
       });
     } finally {
-      setUploading(false);
-      
-      // Clear the file input to allow re-selection of the same file
-      const fileInput = document.getElementById('image-upload') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      setLoading(false);
     }
-  }, [form, id, toast, getFullImageUrl, uploading]);
+  }, [id, form, setImages]);
 
   const onSubmit = async (data: FormData) => {
     if (!location.address) {

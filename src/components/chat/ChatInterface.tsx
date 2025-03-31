@@ -263,9 +263,6 @@ export function ChatInterface({
             <p className="text-xs text-muted-foreground">{conversationTitle}</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Messages Area */}

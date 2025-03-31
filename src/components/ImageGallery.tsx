@@ -71,9 +71,15 @@ export const ImageGallery = ({
   // Mobile carousel view
   const MobileView = () => (
     <div className="relative group md:hidden">
-      <div className="aspect-video relative overflow-hidden rounded-lg">
+      <div className="aspect-[4/3] relative overflow-hidden rounded-lg">
         <img
           src={images[currentIndex].url}
+          srcSet={`${images[currentIndex].url} 480w,
+                  ${images[currentIndex].url} 640w,
+                  ${images[currentIndex].url} 768w`}
+          sizes="(max-width: 480px) 100vw,
+                 (max-width: 640px) 100vw,
+                 768px"
           alt={`Image ${currentIndex + 1}`}
           className="w-full h-full object-cover"
           loading="lazy"
@@ -139,15 +145,21 @@ export const ImageGallery = ({
   const DesktopView = () => {
     return (
       <div className="hidden md:block">
-        <div className="flex gap-2 rounded-xl overflow-hidden">
+        <div className="flex gap-2 rounded-xl overflow-hidden h-[400px]">
           {/* Main large image - always show first image */}
-          <div className="flex-grow-[4] aspect-video relative overflow-hidden rounded-lg">
+          <div className="flex-grow-[3] relative overflow-hidden rounded-lg">
             <img
               src={images[0].url}
+              srcSet={`${images[0].url} 640w,
+                      ${images[0].url} 960w,
+                      ${images[0].url} 1280w`}
+              sizes="(max-width: 640px) 100vw,
+                     (max-width: 960px) 75vw,
+                     1280px"
               alt={`Main Image`}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               onClick={() => openLightbox(0)}
-              loading="lazy"
+              loading="eager"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end justify-start p-4">
               <Button 
@@ -181,12 +193,16 @@ export const ImageGallery = ({
           </div>
           
           {/* Side thumbnails column */}
-          <div className="flex-grow-[0.5] flex flex-col gap-2">
+          <div className="flex-grow-[1] grid grid-cols-2 gap-2">
             {/* First thumbnail slot */}
             {images.length > 1 ? (
-              <div className="relative flex-1 overflow-hidden rounded-lg group">
+              <div className="relative aspect-square overflow-hidden rounded-lg group">
                 <img
                   src={images[1].url}
+                  srcSet={`${images[1].url} 400w,
+                          ${images[1].url} 600w`}
+                  sizes="(max-width: 400px) 100vw,
+                         600px"
                   alt={`Thumbnail 1`}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   onClick={() => openLightbox(1)}
@@ -209,16 +225,20 @@ export const ImageGallery = ({
               </div>
             ) : (
               // Empty placeholder for consistent layout
-              <div className="flex-1 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                 <ImageIcon className="w-8 h-8 text-gray-300" />
               </div>
             )}
             
             {/* Second thumbnail slot with "more" indicator if needed */}
             {images.length > 2 ? (
-              <div className="relative flex-1 overflow-hidden rounded-lg group">
+              <div className="relative aspect-square overflow-hidden rounded-lg group">
                 <img
                   src={images[2].url}
+                  srcSet={`${images[2].url} 400w,
+                          ${images[2].url} 600w`}
+                  sizes="(max-width: 400px) 100vw,
+                         600px"
                   alt={`Thumbnail 2`}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   onClick={() => openLightbox(2)}
@@ -252,7 +272,7 @@ export const ImageGallery = ({
               </div>
             ) : (
               // Empty placeholder for consistent layout
-              <div className="flex-1 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                 <ImageIcon className="w-8 h-8 text-gray-300" />
               </div>
             )}
@@ -270,6 +290,12 @@ export const ImageGallery = ({
           <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={images[currentIndex].url}
+              srcSet={`${images[currentIndex].url} 1200w,
+                      ${images[currentIndex].url} 1600w,
+                      ${images[currentIndex].url} 2048w`}
+              sizes="(max-width: 1200px) 100vw,
+                     (max-width: 1600px) 100vw,
+                     2048px"
               alt={`Image ${currentIndex + 1} in fullscreen`}
               className="max-h-full max-w-full object-contain"
             />
@@ -314,23 +340,26 @@ export const ImageGallery = ({
         </div>
         
         {/* Thumbnails at the bottom */}
-        <div className="bg-black/90 p-2 flex overflow-x-auto gap-2 justify-center">
-          {images.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`relative flex-shrink-0 h-16 w-24 rounded overflow-hidden ${
-                index === currentIndex ? 'ring-2 ring-primary' : 'opacity-70'
-              }`}
-              aria-label={`Go to image ${index + 1}`}
-            >
-              <img
-                src={image.url}
-                alt={`Thumbnail ${index + 1}`}
-                className="h-full w-full object-cover"
-              />
-            </button>
-          ))}
+        <div className="bg-black/90 p-4">
+          <div className="grid grid-cols-6 gap-2 max-w-3xl mx-auto">
+            {images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`relative aspect-square rounded overflow-hidden ${
+                  index === currentIndex ? 'ring-2 ring-primary' : 'opacity-70 hover:opacity-100'
+                }`}
+                aria-label={`Go to image ${index + 1}`}
+              >
+                <img
+                  src={image.url}
+                  alt={`Thumbnail ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
