@@ -1,16 +1,28 @@
 import { Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { getImagePath } from '@/utils/imageUtils';
 
 const Hero = () => {
+  // Define image with fallback strategy
+  const heroImagePath = getImagePath('/images/african.jpg');
+  
   return (
     <div className="relative h-[600px] overflow-hidden">
       {/* Hero Background */}
       <div className="absolute inset-0">
       <img
-          src="/images/african.jpg" // You'll need to add this image
+          src={heroImagePath}
           alt="Local food and stays"
           className="w-full h-full object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // Try different path variations if the image fails to load
+            if (!target.src.includes('african.jpg')) {
+              // First try with the /images prefix
+              target.src = '/images/african.jpg';
+            }
+          }}
         />
 
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
