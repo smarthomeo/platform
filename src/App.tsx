@@ -20,6 +20,7 @@ import HostDashboard from "@/pages/host/HostDashboard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ScrollToTop from "@/components/ScrollToTop";
 import { useEffect } from "react";
 import Profile from "@/pages/Profile";
 import { Toaster } from "sonner";
@@ -75,6 +76,7 @@ const App = () => {
     <AuthProvider>
       <ChatProvider>
         <Router>
+          <ScrollToTop />
           <UserSync />
           <Routes>
             <Route path="/" element={<Index />} />
